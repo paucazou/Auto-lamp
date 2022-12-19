@@ -235,8 +235,10 @@ static void udp_server_task(void *pvParameters)
                 } else if (source_addr.ss_family == PF_INET6) {
                     inet6_ntoa_r(((struct sockaddr_in6 *)&source_addr)->sin6_addr, addr_str, sizeof(addr_str) - 1);
                 }
-                if (len != 6) {
+                int err;
+                if (len != 5) {
                     ESP_LOGE(TAG, "Incomplete message. %d bytes received",len);
+                    err = sendto(sock, "invalid", 7, 0, (struct sockaddr *)&source_addr, sizeof(source_addr));
                     break;
                 }
 
@@ -248,7 +250,6 @@ static void udp_server_task(void *pvParameters)
                         rx_buffer[3],
                         rx_buffer[4]);
                 struct Period p;
-                int err;
                 if (create_period(&p, &rx_buffer[1])) {
                     xQueueSend(bool_queue, &rx_buffer[0], 0);
                     xQueueSend(period_queue, &p, 0);
@@ -407,6 +408,27 @@ struct tm* fill_time() {
 }
 
 bool is_time_in(struct tm* current_time, struct Period* period) {
+    // Convert the start and end times to minutes since midnight
+    int start_time_minutes = period->start_h* 60 + period->start_m;
+    int end_time_minutes = period->end_h * 60 + period->end_m;
+
+    // Convert the current time to minutes since midnight
+    int current_time_minutes = current_time->tm_hour * 60 + current_time->tm_min;
+
+    // Check if the current time is within the given period
+    if (start_time_minutes <= end_time_minutes) {
+        // Start time is before or equal to end time
+        return start_time_minutes <= current_time_minutes && current_time_minutes < end_time_minutes;
+    } else {
+        // Start time is after end time
+        return start_time_minutes <= current_time_minutes || current_time_minutes < end_time_minutes;
+    }
+}
+
+
+#if 0
+
+bool is_time_in(struct tm* current_time, struct Period* period) {
     // thanks to chat gpt
     // Convert the start and end times to minutes since midnight
     int start_time_minutes = period->start_h* 60 + period->start_m;
@@ -418,6 +440,7 @@ bool is_time_in(struct tm* current_time, struct Period* period) {
     // Check if the current time is within the given period
     return start_time_minutes <= current_time_minutes && current_time_minutes < end_time_minutes;
 }
+#endif
 
 #if 0
 void light_manager() {
