@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # mostly written by ChatGPT
+source ascii_table
 ADDRESS="192.168.1.22"
 PORT="3333"
 
@@ -7,7 +8,7 @@ PORT="3333"
 # and so is 08:10
 # No solution has been found
 
-DEBUG=0
+DEBUG=1
 
 
 debug () {
@@ -48,7 +49,8 @@ fi
 
 # we transform the value into its ascii value in order to send the integer to the server
 # and not a string
-msg=`printf "\x$(printf %x $arg1)"`
+#msg=`printf "\x$(printf %x $arg1)"`
+msg=$ascii[$arg1]
 
 hours=($arg2 $arg3)
 for elt in $hours; do
@@ -69,8 +71,10 @@ for elt in $hours; do
     fi
 
     # Convert the hour and minute to their ASCII values
-    ascii_hour=`printf "\x$(printf %x $hour)"`
-    ascii_minute=`printf "\x$(printf %x $minute)"`
+    #ascii_hour=`printf "\x$(printf %x $hour)"`
+    #ascii_minute=`printf "\x$(printf %x $minute)"`
+    ascii_hour=$ascii[$hour]
+    ascii_minute=$ascii[$minute]
     debug "length ascii: hour " ${#ascii_hour} "minute" ${#ascii_minute}
     msg+=${ascii_hour}${ascii_minute}
 done
